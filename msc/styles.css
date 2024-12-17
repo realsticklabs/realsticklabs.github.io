@@ -1,0 +1,12 @@
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            font-size: 16px;
+            padding: 10px;
+        }
+        #output {
+            margin-top: 20px;
+            font-size: 18px;
+        }
