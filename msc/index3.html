@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Minecraft Hash from Pollinating Sandboxes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            font-size: 16px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-size: 16px;
+        }
+        #output {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reverse Minecraft Hash (Starting from "pollinating sandboxes")</h1>
+    <label for="targetHash">Target Hash:</label><br>
+    <input type="number" id="targetHash" placeholder="Enter target hash to reverse" value="0">
+    <br>
+    <button onclick="reverseHash()">Reverse Hash</button>
+    <div id="output">Results will appear here...</div>
+
+    <script>
+        function hash(str) {
+            if (!str || /^0+$/.test(str)) return '[random]';
+            if (/^-?\d+$/.test(str) && str.length < 20) return str.replace(/^(-?)0+/, '$1');
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                let character = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + character;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return hash;
+        }
+
+        function reverseHash() {
+            const baseString = "pollinating sandboxes";
+            const targetHash = parseInt(document.getElementById('targetHash').value, 10);
+
+            if (isNaN(targetHash)) {
+                document.getElementById('output').innerHTML = 'Please enter a valid target hash.';
+                return;
+            }
+
+            let currentString = baseString;
+            let currentHash = hash(currentString);
+            let suffixChar = 'a';  // Starting character for suffix testing
+
+            let result = `<strong>Reversing hash for target: ${targetHash}</strong><br><br>`;
+            result += `Starting with base string: "${currentString}" | Hash: ${currentHash}<br><br>`;
+
+            // Try appending characters to match the target hash
+            let steps = 0;
+            while (currentHash !== targetHash && suffixChar <= 'z') {
+                let testString = currentString + suffixChar;
+                currentHash = hash(testString);
+                result += `Test String: "${testString}" | Hash: ${currentHash}<br>`;
+                if (currentHash === targetHash) {
+                    result += `<strong>Match found!</strong> Final string: "${testString}"<br>`;
+                    break;
+                }
+                suffixChar = String.fromCharCode(suffixChar.charCodeAt(0) + 1); // Increment the character
+                steps++;
+                if (steps > 100) break;  // Avoid infinite loops, just a safeguard
+            }
+
+            if (currentHash !== targetHash) {
+                result += 'Target hash not found within the tested range.';
+            }
+
+            document.getElementById('output').innerHTML = result;
+        }
+    </script>
+</body>
+</html>
