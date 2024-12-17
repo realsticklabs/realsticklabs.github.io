@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reverse Minecraft Seed</title>
+    <title>Analyze Minecraft Hash Patterns</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,6 +12,12 @@
         input, button {
             font-size: 16px;
             padding: 10px;
+            margin: 5px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-size: 16px;
         }
         #output {
             margin-top: 20px;
@@ -20,16 +26,18 @@
     </style>
 </head>
 <body>
-    <h1>Reverse Minecraft Seed</h1>
-    <label for="seed">Enter a Minecraft seed (hash):</label>
+    <h1>Minecraft Hash Pattern Analyzer</h1>
+    <label for="baseString">Base string:</label><br>
+    <input type="text" id="baseString" placeholder="Enter base string (e.g., pollinating sandboxes)" value="pollinating sandboxes">
     <br>
-    <input type="text" id="seed" placeholder="Enter your seed here">
-    <button onclick="reverseSeed()">Reverse</button>
-    <div id="output">Output: </div>
+    <label for="suffixes">Suffixes to test (comma-separated):</label><br>
+    <input type="text" id="suffixes" placeholder="Enter suffixes (e.g., a,b,c,fa,ez)" value="a,b,c,fa,ez">
+    <br>
+    <button onclick="analyzeHash()">Analyze Hash</button>
+    <div id="output">Results will appear here...</div>
 
     <script>
-        function hash(a) {
-            let str = a.toString();
+        function hash(str) {
             if (!str || /^0+$/.test(str)) return '[random]';
             if (/^-?\d+$/.test(str) && str.length < 20) return str.replace(/^(-?)0+/, '$1');
             let hash = 0;
@@ -41,46 +49,31 @@
             return hash;
         }
 
-        function reverseSeed() {
-            const seedInput = document.getElementById('seed').value.trim();
-            const output = document.getElementById('output');
-            let possibleOriginals = [];
-            
-            // Validate seed input
-            if (!/^-?\d+$/.test(seedInput)) {
-                output.textContent = 'Output: Invalid input. Please enter a valid numeric hash.';
+        function analyzeHash() {
+            const baseString = document.getElementById('baseString').value.trim();
+            const suffixes = document.getElementById('suffixes').value.trim().split(',');
+
+            if (!baseString) {
+                document.getElementById('output').innerHTML = 'Please enter a base string.';
                 return;
             }
 
-            const targetHash = parseInt(seedInput, 10);
-
-            // Check small strings
-            const charset = 'abcdefghijklmnopqrstuvwxyz0123456789'; // Define a charset for brute-forcing
-            const maxLength = 4; // Limit string length for performance
-
-            function bruteForce(prefix) {
-                if (prefix.length > maxLength) return;
-                if (hash(prefix) === targetHash) {
-                    possibleOriginals.push(prefix);
-                }
-                for (const char of charset) {
-                    bruteForce(prefix + char);
-                }
+            if (suffixes.length === 0 || suffixes[0] === "") {
+                document.getElementById('output').innerHTML = 'Please enter at least one suffix to test.';
+                return;
             }
 
-            bruteForce('');
+            let results = `<strong>Base string:</strong> "${baseString}"<br>`;
+            results += `Hash: ${hash(baseString)}<br><br>`;
+            results += `<strong>Suffixes tested:</strong><br>`;
 
-            // Check simple integer seeds
-            if (hash(targetHash.toString()) === targetHash) {
-                possibleOriginals.push(targetHash.toString());
+            for (const suffix of suffixes) {
+                const testString = baseString + suffix;
+                const resultHash = hash(testString);
+                results += `String: "${testString}" | Hash: ${resultHash}<br>`;
             }
 
-            // Display results
-            if (possibleOriginals.length > 0) {
-                output.textContent = `Output: Possible original strings: ${possibleOriginals.join(', ')}`;
-            } else {
-                output.textContent = `Output: No match found for seed ${seedInput} within constraints.`;
-            }
+            document.getElementById('output').innerHTML = results;
         }
     </script>
 </body>
