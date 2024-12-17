@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Minecraft Seed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            font-size: 16px;
+            padding: 10px;
+        }
+        #output {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reverse Minecraft Seed</h1>
+    <label for="seed">Enter a Minecraft seed:</label>
+    <br>
+    <input type="text" id="seed" placeholder="Enter your seed here">
+    <button onclick="reverseSeed()">Reverse</button>
+    <div id="output">Output: </div>
+
+    <script>
+        function reverseSeed() {
+            const seedInput = document.getElementById('seed').value.trim();
+            const output = document.getElementById('output');
+            
+            // Validate if the input is a number
+            if (!/^-?\d+$/.test(seedInput)) {
+                output.textContent = 'Output: Invalid input. Please enter a valid seed number.';
+                return;
+            }
+            
+            // Since reversing a hash is impossible in most cases, notify the user
+            const seed = parseInt(seedInput, 10);
+            output.textContent = `Output: Exact reversal is not possible for hash ${seed}. Hashing is one-way.`;
+        }
+    </script>
+</body>
+</html>
