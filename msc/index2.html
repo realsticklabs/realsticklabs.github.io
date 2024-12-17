@@ -21,26 +21,66 @@
 </head>
 <body>
     <h1>Reverse Minecraft Seed</h1>
-    <label for="seed">Enter a Minecraft seed:</label>
+    <label for="seed">Enter a Minecraft seed (hash):</label>
     <br>
     <input type="text" id="seed" placeholder="Enter your seed here">
     <button onclick="reverseSeed()">Reverse</button>
     <div id="output">Output: </div>
 
     <script>
+        function hash(a) {
+            let str = a.toString();
+            if (!str || /^0+$/.test(str)) return '[random]';
+            if (/^-?\d+$/.test(str) && str.length < 20) return str.replace(/^(-?)0+/, '$1');
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                let character = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + character;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return hash;
+        }
+
         function reverseSeed() {
             const seedInput = document.getElementById('seed').value.trim();
             const output = document.getElementById('output');
+            let possibleOriginals = [];
             
-            // Validate if the input is a number
+            // Validate seed input
             if (!/^-?\d+$/.test(seedInput)) {
-                output.textContent = 'Output: Invalid input. Please enter a valid seed number.';
+                output.textContent = 'Output: Invalid input. Please enter a valid numeric hash.';
                 return;
             }
-            
-            // Since reversing a hash is impossible in most cases, notify the user
-            const seed = parseInt(seedInput, 10);
-            output.textContent = `Output: Exact reversal is not possible for hash ${seed}. Hashing is one-way.`;
+
+            const targetHash = parseInt(seedInput, 10);
+
+            // Check small strings
+            const charset = 'abcdefghijklmnopqrstuvwxyz0123456789'; // Define a charset for brute-forcing
+            const maxLength = 4; // Limit string length for performance
+
+            function bruteForce(prefix) {
+                if (prefix.length > maxLength) return;
+                if (hash(prefix) === targetHash) {
+                    possibleOriginals.push(prefix);
+                }
+                for (const char of charset) {
+                    bruteForce(prefix + char);
+                }
+            }
+
+            bruteForce('');
+
+            // Check simple integer seeds
+            if (hash(targetHash.toString()) === targetHash) {
+                possibleOriginals.push(targetHash.toString());
+            }
+
+            // Display results
+            if (possibleOriginals.length > 0) {
+                output.textContent = `Output: Possible original strings: ${possibleOriginals.join(', ')}`;
+            } else {
+                output.textContent = `Output: No match found for seed ${seedInput} within constraints.`;
+            }
         }
     </script>
 </body>
