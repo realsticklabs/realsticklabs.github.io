@@ -63,9 +63,10 @@
             let steps = 0;
             let suffix = 'a'; // Starting suffix
             let suffixIndex = 0; // For handling suffix beyond z
+            let failedSeeds = [];
 
             // Try appending suffixes to match the target hash
-            while (currentHash !== targetHash && steps < 1000) {
+            while (currentHash !== targetHash && steps < 10000) {
                 let testString = currentString + suffix;
                 currentHash = hash(testString);
                 result += `Test String: "${testString}" | Hash: ${currentHash}<br>`;
@@ -74,6 +75,12 @@
                     result += `<strong>Match found!</strong> Final string: "${testString}"<br>`;
                     break;
                 }
+
+                // Store the last 10 seeds that didn't work
+                if (failedSeeds.length >= 10) {
+                    failedSeeds.shift();  // Remove the oldest failed seed
+                }
+                failedSeeds.push(testString);
 
                 // Increment the suffix alphabetically
                 suffixIndex++;
@@ -87,12 +94,18 @@
                 }
                 
                 steps++;
-                if (steps > 100) break;  // Safety measure to prevent infinite loop
+                if (steps >= 10000) break;  // Increased limit of 10000 iterations
             }
 
             if (currentHash !== targetHash) {
-                result += 'Target hash not found within the tested range.';
+                result += 'Target hash not found within the tested range.<br>';
             }
+
+            // Display the last 10 seeds that didn't work
+            result += '<br><strong>Last 10 tested seeds:</strong><br>';
+            failedSeeds.forEach(seed => {
+                result += `${seed}<br>`;
+            });
 
             document.getElementById('output').innerHTML = result;
         }
