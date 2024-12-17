@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Last Modified Header</title>
+</head>
+<body>
+    <h1>Last Modified Date from HTTP Headers</h1>
+    <p id="lastModified"></p>
+
+    <script>
+        // Fetch the current page to get the response headers
+        fetch(window.location.href)
+            .then(response => {
+                // Extract the Last-Modified header
+                const lastModified = response.headers.get('Last-Modified');
+                
+                // Display it if the header is present
+                if (lastModified) {
+                    document.getElementById("lastModified").textContent = "This page was last modified on: " + lastModified;
+                } else {
+                    document.getElementById("lastModified").textContent = "Last-Modified header not available.";
+                }
+            })
+            .catch(error => {
+                document.getElementById("lastModified").textContent = "Error fetching header: " + error;
+            });
+    </script>
+</body>
+</html>
