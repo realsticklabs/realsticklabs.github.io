@@ -3,29 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Last Modified Header</title>
+    <title>Find Last Modified Date</title>
 </head>
 <body>
-    <h1>Last Modified Date from HTTP Headers</h1>
+    <h1>Find the Last Modified Date (LMD)</h1>
+    <label for="urlInput">Enter URL:</label>
+    <input type="text" id="urlInput" placeholder="e.g., https://example.com">
+    <button onclick="fetchLastModified()">Get Last Modified Date</button>
+    
     <p id="lastModified"></p>
 
     <script>
-        // Fetch the current page to get the response headers
-        fetch(window.location.href)
-            .then(response => {
-                // Extract the Last-Modified header
-                const lastModified = response.headers.get('Last-Modified');
-                
-                // Display it if the header is present
-                if (lastModified) {
-                    document.getElementById("lastModified").textContent = "This page was last modified on: " + lastModified;
-                } else {
-                    document.getElementById("lastModified").textContent = "Last-Modified header not available.";
-                }
-            })
-            .catch(error => {
-                document.getElementById("lastModified").textContent = "Error fetching header: " + error;
-            });
+        function fetchLastModified() {
+            // Get the URL entered by the user
+            const url = document.getElementById("urlInput").value;
+
+            // Check if the URL is valid
+            if (!url) {
+                document.getElementById("lastModified").textContent = "Please enter a valid URL.";
+                return;
+            }
+
+            // Make the fetch request
+            fetch(url)
+                .then(response => {
+                    // Get the Last-Modified header
+                    const lastModified = response.headers.get('Last-Modified');
+
+                    // Display the result
+                    if (lastModified) {
+                        document.getElementById("lastModified").textContent = "Last Modified Date: " + lastModified;
+                    } else {
+                        document.getElementById("lastModified").textContent = "Last-Modified header not available.";
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("lastModified").textContent = "Error fetching the Last-Modified date: " + error;
+                });
+        }
     </script>
 </body>
 </html>
