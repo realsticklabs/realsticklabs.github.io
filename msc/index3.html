@@ -62,7 +62,6 @@
 
             let steps = 0;
             let suffix = 'a'; // Starting suffix
-            let suffixIndex = 0; // For handling suffix beyond z
             let failedSeeds = [];
 
             // Try appending suffixes to match the target hash
@@ -83,16 +82,8 @@
                 failedSeeds.push(testString);
 
                 // Increment the suffix alphabetically
-                suffixIndex++;
-                if (suffixIndex === 26) {
-                    suffixIndex = 0;
-                    let nextSuffix = suffix.split('');
-                    nextSuffix[0] = String.fromCharCode(nextSuffix[0].charCodeAt(0) + 1); // Move to next letter for the first character
-                    suffix = nextSuffix.join('');
-                } else {
-                    suffix = String.fromCharCode(97 + suffixIndex); // Increment the suffix character
-                }
-                
+                suffix = incrementSuffix(suffix);
+
                 steps++;
                 if (steps >= 10000) break;  // Increased limit of 10000 iterations
             }
@@ -108,6 +99,28 @@
             });
 
             document.getElementById('output').innerHTML = result;
+        }
+
+        // Function to increment suffixes properly (a, b, c, ..., z, aa, ab, ac, ..., etc.)
+        function incrementSuffix(suffix) {
+            let suffixArray = suffix.split('');
+            let index = suffixArray.length - 1;
+
+            while (index >= 0) {
+                if (suffixArray[index] === 'z') {
+                    suffixArray[index] = 'a';
+                    index--;
+                } else {
+                    suffixArray[index] = String.fromCharCode(suffixArray[index].charCodeAt(0) + 1);
+                    break;
+                }
+            }
+
+            if (index < 0) {
+                suffixArray = ['a'].concat(suffixArray); // Add 'a' at the front for a new character (e.g., from 'z' to 'aa')
+            }
+
+            return suffixArray.join('');
         }
     </script>
 </body>
