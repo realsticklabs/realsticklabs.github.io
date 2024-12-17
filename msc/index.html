@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Minecraft Seed Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            font-size: 16px;
+            padding: 10px;
+        }
+        #output {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Minecraft Seed Converter</h1>
+    <label for="seed">Enter a string to convert into a Minecraft seed:</label>
+    <br>
+    <input type="text" id="seed" placeholder="Enter your string here">
+    <button onclick="submitSeed()">Convert</button>
+    <div id="output">Output seed: </div>
+
+    <script>
+        function hash(a) {
+            let str = a.toString();
+            if (!str || /^0+$/.test(str)) return '[random]';
+            if (/^-?\d+$/.test(str) && str.length < 20) return str.replace(/^(-?)0+/, '$1');
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                let character = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + character;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return hash;
+        }
+
+        function submitSeed() {
+            const seedInput = document.getElementById('seed').value;
+            const output = document.getElementById('output');
+            output.textContent = 'Output seed: ' + hash(seedInput);
+        }
+    </script>
+</body>
+</html>
