@@ -24,8 +24,11 @@
                 return;
             }
 
-            // Make the fetch request
-            fetch(url)
+            // CORS Anywhere proxy URL
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+
+            // Make the fetch request via the CORS proxy
+            fetch(proxyUrl + url)
                 .then(response => {
                     // Get the Last-Modified header
                     const lastModified = response.headers.get('Last-Modified');
