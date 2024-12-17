@@ -26,7 +26,7 @@
     </style>
 </head>
 <body>
-    <h1>Reverse Minecraft Hash (Starting from "pollinating sandboxes")</h1>
+    <h1>Reverse Minecraft Hash (Starting from "pollinating sandboxe")</h1>
     <label for="targetHash">Target Hash:</label><br>
     <input type="number" id="targetHash" placeholder="Enter target hash to reverse" value="0">
     <br>
@@ -47,7 +47,7 @@
         }
 
         function reverseHash() {
-            const baseString = "pollinating sandboxes";
+            const baseString = "pollinating sandboxe";  // Start from "pollinating sandboxe"
             const targetHash = parseInt(document.getElementById('targetHash').value, 10);
 
             if (isNaN(targetHash)) {
@@ -57,24 +57,37 @@
 
             let currentString = baseString;
             let currentHash = hash(currentString);
-            let suffixChar = 'a';  // Starting character for suffix testing
-
             let result = `<strong>Reversing hash for target: ${targetHash}</strong><br><br>`;
             result += `Starting with base string: "${currentString}" | Hash: ${currentHash}<br><br>`;
 
-            // Try appending characters to match the target hash
             let steps = 0;
-            while (currentHash !== targetHash && suffixChar <= 'z') {
-                let testString = currentString + suffixChar;
+            let suffix = 'a'; // Starting suffix
+            let suffixIndex = 0; // For handling suffix beyond z
+
+            // Try appending suffixes to match the target hash
+            while (currentHash !== targetHash && steps < 1000) {
+                let testString = currentString + suffix;
                 currentHash = hash(testString);
                 result += `Test String: "${testString}" | Hash: ${currentHash}<br>`;
+
                 if (currentHash === targetHash) {
                     result += `<strong>Match found!</strong> Final string: "${testString}"<br>`;
                     break;
                 }
-                suffixChar = String.fromCharCode(suffixChar.charCodeAt(0) + 1); // Increment the character
+
+                // Increment the suffix alphabetically
+                suffixIndex++;
+                if (suffixIndex === 26) {
+                    suffixIndex = 0;
+                    let nextSuffix = suffix.split('');
+                    nextSuffix[0] = String.fromCharCode(nextSuffix[0].charCodeAt(0) + 1); // Move to next letter for the first character
+                    suffix = nextSuffix.join('');
+                } else {
+                    suffix = String.fromCharCode(97 + suffixIndex); // Increment the suffix character
+                }
+                
                 steps++;
-                if (steps > 100) break;  // Avoid infinite loops, just a safeguard
+                if (steps > 100) break;  // Safety measure to prevent infinite loop
             }
 
             if (currentHash !== targetHash) {
