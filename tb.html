@@ -5,12 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three Block</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
         canvas { display: block; }
+        #saveButton {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px 20px;
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #saveButton:hover {
+            background-color: #005fa3;
+        }
     </style>
 </head>
 <body>
+    <button id="saveButton">Save Level</button>
     <script>
         // Setup scene, camera, renderer
         const scene = new THREE.Scene();
@@ -24,7 +40,7 @@
         const platformGeometry = new THREE.BoxGeometry(blockSize, blockSize / 2, blockSize);
         const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); // Green block
         const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-        platform.position.set(0, -blockSize / 4, 0); // Position the block slightly below the camera
+        platform.position.set(0, -blockSize / 4, 0);
         scene.add(platform);
 
         // Lighting
@@ -35,56 +51,112 @@
         pointLight.position.set(10, 10, 10);
         scene.add(pointLight);
 
-        // Camera initial position (above the block)
-        camera.position.set(0, 2, 5); // Positioned above and slightly back
+        // Block variables
+        const blockGeometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+        const blockColors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0xff1493];
+        let currentBlockColor = blockColors[0];
+        const blocks = [platform]; // Store placed blocks, starting with the platform
+
+        // Player setup
+        camera.position.set(0, blockSize, 5);
         camera.lookAt(0, 0, 0);
 
-        // Controls
-        const controls = {
-            forward: false,
-            backward: false,
-            left: false,
-            right: false,
-            up: false,
-            down: false,
-        };
+        // Orbit controls for screen rotation
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 0, 0);
+        controls.update();
 
+        // Helper to check adjacency
+        function isAdjacent(position) {
+            const directions = [
+                new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), // Left, Right
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0), // Top, Bottom
+                new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)  // Front, Back
+            ];
+            for (const block of blocks) {
+                for (const dir of directions) {
+                    const neighbor = new THREE.Vector3().copy(block.position).add(dir.multiplyScalar(blockSize));
+                    if (neighbor.equals(position)) return true;
+                }
+            }
+            return false;
+        }
+
+        // Block placement and removal
+        window.addEventListener('mousedown', (event) => {
+            const mouse = new THREE.Vector2(
+                (event.clientX / window.innerWidth) * 2 - 1,
+                -(event.clientY / window.innerHeight) * 2 + 1
+            );
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const position = new THREE.Vector3().copy(intersect.point).add(intersect.face.normal).divideScalar(blockSize).floor().multiplyScalar(blockSize);
+
+                if (event.button === 0) {
+                    // Left-click: Place a block (if adjacent)
+                    if (isAdjacent(position)) {
+                        const newBlock = new THREE.Mesh(
+                            blockGeometry,
+                            new THREE.MeshStandardMaterial({ color: currentBlockColor })
+                        );
+                        newBlock.position.copy(position);
+                        scene.add(newBlock);
+                        blocks.push(newBlock);
+                    }
+                } else if (event.button === 2) {
+                    // Right-click: Remove a block
+                    const object = intersect.object;
+                    if (object !== platform) {
+                        scene.remove(object);
+                        const index = blocks.indexOf(object);
+                        if (index !== -1) blocks.splice(index, 1);
+                    }
+                }
+            }
+        });
+
+        // Change block color with keys 1-7
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'w') controls.forward = true;
-            if (event.key === 's') controls.backward = true;
-            if (event.key === 'a') controls.left = true;
-            if (event.key === 'd') controls.right = true;
-            if (event.key === ' ') controls.up = true;
-            if (event.key === 'Shift') controls.down = true;
+            const blockIndex = parseInt(event.key, 10) - 1;
+            if (blockIndex >= 0 && blockIndex < blockColors.length) {
+                currentBlockColor = blockColors[blockIndex];
+            }
         });
 
-        document.addEventListener('keyup', (event) => {
-            if (event.key === 'w') controls.forward = false;
-            if (event.key === 's') controls.backward = false;
-            if (event.key === 'a') controls.left = false;
-            if (event.key === 'd') controls.right = false;
-            if (event.key === ' ') controls.up = false;
-            if (event.key === 'Shift') controls.down = false;
-        });
+        // Save level button
+        document.getElementById('saveButton').addEventListener('click', () => {
+            const levelData = blocks.map(block => ({
+                x: block.position.x,
+                y: block.position.y,
+                z: block.position.z,
+                color: block.material.color.getHexString()
+            }));
 
-        // Movement speed
-        const moveSpeed = 0.1;
+            const zip = new JSZip();
+            zip.file("level.json", JSON.stringify(levelData, null, 2));
+            zip.generateAsync({ type: "blob" }).then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'level.dat';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        });
 
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
-
-            if (controls.forward) camera.position.z -= moveSpeed;
-            if (controls.backward) camera.position.z += moveSpeed;
-            if (controls.left) camera.position.x -= moveSpeed;
-            if (controls.right) camera.position.x += moveSpeed;
-            if (controls.up) camera.position.y += moveSpeed;
-            if (controls.down) camera.position.y -= moveSpeed;
-
+            controls.update();
             renderer.render(scene, camera);
         }
 
         animate();
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </body>
 </html>
