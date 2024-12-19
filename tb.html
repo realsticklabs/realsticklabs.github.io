@@ -52,7 +52,7 @@
 
         // Movement variables
         const movementSpeed = 0.1;
-        const rotationSpeed = 0.01;
+        const rotationSpeed = 0.05;
         let moveForward = false;
         let moveBackward = false;
         let moveLeft = false;
@@ -134,9 +134,9 @@
                 player.position.x += movementSpeed; // Move right along X-axis
             }
 
-            // Update camera to follow the player's position and orientation
-            camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5);
-            camera.lookAt(player.position);
+            // Camera follows the player's position and orientation
+            camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5); // 5 units behind player
+            camera.lookAt(player.position); // Camera always looks at player
 
             // Render the scene
             renderer.render(scene, camera);
