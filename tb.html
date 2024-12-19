@@ -47,15 +47,19 @@
         scene.add(player);
 
         // Camera setup (Player's POV)
-        camera.position.set(0, 1, 5); // Camera behind the player initially
+        camera.position.set(0, 1, 5); // Initial position behind the player
+        camera.rotation.set(0, 0, 0); // Camera starts without rotation
         camera.lookAt(player.position);
 
         // Movement variables
         const movementSpeed = 0.1;
+        const rotationSpeed = 0.05;
         let moveForward = false;
         let moveBackward = false;
         let moveLeft = false;
         let moveRight = false;
+        let rotateLeft = false;
+        let rotateRight = false;
 
         // Keyboard event listeners
         window.addEventListener('keydown', (event) => {
@@ -65,8 +69,10 @@
                 moveBackward = true;
             } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
                 moveLeft = true;
+                rotateLeft = true;
             } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
                 moveRight = true;
+                rotateRight = true;
             }
         });
 
@@ -77,8 +83,10 @@
                 moveBackward = false;
             } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
                 moveLeft = false;
+                rotateLeft = false;
             } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
                 moveRight = false;
+                rotateRight = false;
             }
         });
 
@@ -88,21 +96,31 @@
 
             // Handle movement
             if (moveForward) {
-                player.position.z -= movementSpeed;
+                player.position.z -= movementSpeed * Math.cos(player.rotation.y); // Move forward in the direction player is facing
+                player.position.x -= movementSpeed * Math.sin(player.rotation.y); // Move forward in the direction player is facing
             }
             if (moveBackward) {
-                player.position.z += movementSpeed;
+                player.position.z += movementSpeed * Math.cos(player.rotation.y); // Move backward in the opposite direction
+                player.position.x += movementSpeed * Math.sin(player.rotation.y); // Move backward in the opposite direction
             }
             if (moveLeft) {
-                player.position.x -= movementSpeed;
+                player.position.x -= movementSpeed; // Move left along X-axis
             }
             if (moveRight) {
-                player.position.x += movementSpeed;
+                player.position.x += movementSpeed; // Move right along X-axis
             }
 
-            // Update camera to follow the player
+            // Handle rotation
+            if (rotateLeft) {
+                player.rotation.y += rotationSpeed; // Rotate player left (counterclockwise)
+            }
+            if (rotateRight) {
+                player.rotation.y -= rotationSpeed; // Rotate player right (clockwise)
+            }
+
+            // Update camera to follow the player's position and orientation
             camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5);
-            camera.lookAt(player.position);
+            camera.rotation.set(player.rotation.x, player.rotation.y, player.rotation.z);
 
             // Render the scene
             renderer.render(scene, camera);
