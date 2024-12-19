@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Babylon.js 25x25x1 World</title>
+    <title>Babylon.js 25x25x1 World with Movement</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
@@ -40,6 +40,66 @@
                 block.position = new BABYLON.Vector3(x - 12, 0, z - 12);
             }
         }
+
+        // Player movement speed
+        const movementSpeed = 0.1;
+
+        // Keyboard inputs for movement
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+
+        // Listen for key events
+        window.addEventListener("keydown", (event) => {
+            switch (event.key) {
+                case "w":
+                    moveForward = true;
+                    break;
+                case "s":
+                    moveBackward = true;
+                    break;
+                case "a":
+                    moveLeft = true;
+                    break;
+                case "d":
+                    moveRight = true;
+                    break;
+            }
+        });
+
+        window.addEventListener("keyup", (event) => {
+            switch (event.key) {
+                case "w":
+                    moveForward = false;
+                    break;
+                case "s":
+                    moveBackward = false;
+                    break;
+                case "a":
+                    moveLeft = false;
+                    break;
+                case "d":
+                    moveRight = false;
+                    break;
+            }
+        });
+
+        // Update the camera position for movement
+        scene.registerBeforeRender(() => {
+            if (moveForward) {
+                camera.position.z += movementSpeed;
+            }
+            if (moveBackward) {
+                camera.position.z -= movementSpeed;
+            }
+            if (moveLeft) {
+                camera.position.x -= movementSpeed;
+            }
+            if (moveRight) {
+                camera.position.x += movementSpeed;
+            }
+        });
 
         // Start the render loop
         engine.runRenderLoop(() => {
