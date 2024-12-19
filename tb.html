@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three Block</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
@@ -29,6 +28,7 @@
 <body>
     <button id="saveButton">Save Level</button>
     <script>
+        // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer();
@@ -37,7 +37,7 @@
 
         const blockSize = 3;
 
-        // Platform
+        // Platform (Ground)
         const platformGeometry = new THREE.BoxGeometry(blockSize, blockSize / 2, blockSize);
         const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
         const platform = new THREE.Mesh(platformGeometry, platformMaterial);
@@ -47,25 +47,19 @@
         // Lighting
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
-
         const pointLight = new THREE.PointLight(0xffffff, 1);
         pointLight.position.set(10, 10, 10);
         scene.add(pointLight);
 
-        // Blocks
+        // Blocks array
         const blockGeometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
         const blockColors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0xff1493];
         let currentBlockColor = blockColors[0];
         const blocks = [platform];
 
-        // Player setup
+        // Player setup (camera)
         camera.position.set(0, blockSize, 5);
         camera.lookAt(0, 0, 0);
-
-        // Orbit controls
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.target.set(0, 0, 0);
-        controls.update();
 
         // Block placement helper
         function isAdjacent(position) {
@@ -83,7 +77,7 @@
             return false;
         }
 
-        // Block interaction
+        // Block placement and removal
         window.addEventListener('mousedown', (event) => {
             const mouse = new THREE.Vector2(
                 (event.clientX / window.innerWidth) * 2 - 1,
@@ -118,6 +112,7 @@
             }
         });
 
+        // Keydown for block color change (1-7 for block colors)
         document.addEventListener('keydown', (event) => {
             const blockIndex = parseInt(event.key, 10) - 1;
             if (blockIndex >= 0 && blockIndex < blockColors.length) {
@@ -125,6 +120,7 @@
             }
         });
 
+        // Save level functionality (as a .dat file)
         document.getElementById('saveButton').addEventListener('click', () => {
             const levelData = blocks.map(block => ({
                 x: block.position.x,
@@ -145,9 +141,9 @@
             });
         });
 
+        // Animation loop
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
             renderer.render(scene, camera);
         }
 
