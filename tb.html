@@ -3,213 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three Block</title>
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <title>Three.js World</title>
     <style>
         body { margin: 0; overflow: hidden; }
-        canvas { display: block; width: 100vw; height: 100vh; }
-        #saveButton {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 10px 20px;
-            background-color: #0078D7;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        #saveButton:hover {
-            background-color: #005fa3;
-        }
+        canvas { display: block; }
     </style>
 </head>
 <body>
-    <button id="saveButton">Save Level</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Create the Babylon.js engine and scene
-        const canvas = document.createElement("canvas");
-        document.body.appendChild(canvas);
-        const engine = new BABYLON.Engine(canvas, true);
-        const scene = new BABYLON.Scene(engine);
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        // Camera setup
-        const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 5, -10), scene);
-        camera.setTarget(BABYLON.Vector3.Zero()); // Target the center of the scene
-        camera.attachControl(canvas, true);
+        // Create the world (a flat 25x25 grid)
+        const worldWidth = 25;
+        const worldHeight = 25;
+        const worldDepth = 1;
 
-        // Lighting setup
-        const light = new BABYLON.HemisphericLight("light", BABYLON.Vector3.Up(), scene);
-        light.intensity = 0.7;
+        const worldGeometry = new THREE.BoxGeometry(1, 1, 1); // Single block size
+        const worldMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green color for the world blocks
+        const worldGroup = new THREE.Group(); // Group to hold all blocks
 
-        // Block size and colors
-        const blockSize = 3;
-        const blockColors = [
-            new BABYLON.Color3(1, 0, 0), // Red
-            new BABYLON.Color3(1, 0.5, 0), // Orange
-            new BABYLON.Color3(1, 1, 0), // Yellow
-            new BABYLON.Color3(0, 1, 0), // Green
-            new BABYLON.Color3(0, 0, 1), // Blue
-            new BABYLON.Color3(0.29, 0, 0.51), // Indigo
-            new BABYLON.Color3(1, 0.08, 0.57) // Pink
-        ];
-
-        let currentBlockColor = blockColors[0];
-        const blocks = [];
-
-        // Create ground
-        const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 50, height: 50 }, scene);
-        ground.position.y = -0.5;
-
-        // Movement setup
-        const moveSpeed = 0.1;  // Slow down the movement
-        const rotateSpeed = 0.01; // Rotation speed for up/down camera movement
-        const gravity = -0.2; // Gravity force applied to the camera
-        const jumpSpeed = 1.5; // Jump force when pressing space
-        let velocityY = 0; // Vertical velocity for gravity and jumping
-        const groundLevel = ground.position.y + 0.5; // Ground height to detect collision
-
-        // Keydown for movement (WASD for movement, Up/Down for camera rotation, Space for jump)
-        let moveDirection = new BABYLON.Vector3(0, 0, 0);
-        let rotateDirection = new BABYLON.Vector3(0, 0, 0);
-        let isJumping = false;
-
-        window.addEventListener('keydown', (event) => {
-            switch(event.key) {
-                case 'w': // Forward (W)
-                    moveDirection.z = -1;
-                    break;
-                case 's': // Backward (S)
-                    moveDirection.z = 1;
-                    break;
-                case 'a': // Left (A)
-                    moveDirection.x = -1;
-                    break;
-                case 'd': // Right (D)
-                    moveDirection.x = 1;
-                    break;
-                case 'ArrowUp': // Look up (Up arrow)
-                    rotateDirection.x = -1;
-                    break;
-                case 'ArrowDown': // Look down (Down arrow)
-                    rotateDirection.x = 1;
-                    break;
-                case ' ':
-                    if (!isJumping) {
-                        isJumping = true;
-                        velocityY = jumpSpeed; // Apply upward force
-                    }
-                    break;
-                case '1': // Red
-                    currentBlockColor = blockColors[0];
-                    break;
-                case '2': // Orange
-                    currentBlockColor = blockColors[1];
-                    break;
-                case '3': // Yellow
-                    currentBlockColor = blockColors[2];
-                    break;
-                case '4': // Green
-                    currentBlockColor = blockColors[3];
-                    break;
-                case '5': // Blue
-                    currentBlockColor = blockColors[4];
-                    break;
-                case '6': // Indigo
-                    currentBlockColor = blockColors[5];
-                    break;
-                case '7': // Pink
-                    currentBlockColor = blockColors[6];
-                    break;
+        // Loop to create the world grid
+        for (let x = 0; x < worldWidth; x++) {
+            for (let z = 0; z < worldHeight; z++) {
+                const block = new THREE.Mesh(worldGeometry, worldMaterial);
+                block.position.set(x - worldWidth / 2, 0, z - worldHeight / 2); // Center the grid
+                worldGroup.add(block);
             }
-        });
-
-        window.addEventListener('keyup', (event) => {
-            switch(event.key) {
-                case 'w':
-                case 's':
-                    moveDirection.z = 0;
-                    break;
-                case 'a':
-                case 'd':
-                    moveDirection.x = 0;
-                    break;
-                case 'ArrowUp':
-                case 'ArrowDown':
-                    rotateDirection.x = 0;
-                    break;
-            }
-        });
-
-        // Block placement helper function
-        function placeBlock(position) {
-            const block = BABYLON.MeshBuilder.CreateBox("block", { size: blockSize }, scene);
-            block.position = position;
-            block.material = new BABYLON.StandardMaterial("blockMaterial", scene);
-            block.material.diffuseColor = currentBlockColor;
-            blocks.push(block);
         }
 
-        // Block placing on mouse move
-        canvas.addEventListener('mousemove', (event) => {
-            const pickResult = scene.pick(scene.pointerX, scene.pointerY);
-            if (pickResult.hit) {
-                const position = pickResult.pickedPoint;
-                if (event.buttons === 1) { // Place block if left mouse button is pressed
-                    placeBlock(position);
-                }
-            }
-        });
+        scene.add(worldGroup);
 
-        // Save level functionality (save to .dat as zip)
-        document.getElementById('saveButton').addEventListener('click', () => {
-            const levelData = blocks.map(block => ({
-                x: block.position.x,
-                y: block.position.y,
-                z: block.position.z,
-                color: block.material.diffuseColor.toHexString()
-            }));
+        // Create the player (a simple cube)
+        const playerGeometry = new THREE.BoxGeometry(1, 2, 1); // Player size (taller than the world blocks)
+        const playerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red color for the player
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        player.position.set(0, 1, 0); // Spawn the player on top of the world
+        scene.add(player);
 
-            const zip = new JSZip();
-            zip.file("level.json", JSON.stringify(levelData, null, 2));
-            zip.generateAsync({ type: "blob" }).then(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'level.dat';
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-        });
+        // Camera position
+        camera.position.set(0, 5, 30); // Camera position above the world
+        camera.lookAt(0, 0, 0); // Look at the center of the world
 
         // Animation loop
-        engine.runRenderLoop(() => {
-            // Apply gravity and vertical movement
-            if (camera.position.y > groundLevel) {
-                velocityY += gravity; // Apply gravity
-            } else {
-                camera.position.y = groundLevel; // Ensure we stay on the ground
-                velocityY = 0; // Reset vertical velocity
-                isJumping = false;
-            }
+        function animate() {
+            requestAnimationFrame(animate);
 
-            camera.position.y += velocityY; // Move vertically based on gravity or jump
+            // Rotate the world (optional)
+            worldGroup.rotation.y += 0.01;
 
-            // Apply movement
-            const forward = camera.getDirection(BABYLON.Axis.Z);
-            const right = camera.getDirection(BABYLON.Axis.X);
-            const movement = forward.scale(moveDirection.z * moveSpeed).add(right.scale(moveDirection.x * moveSpeed));
-            camera.position.addInPlace(movement);
+            // Render the scene
+            renderer.render(scene, camera);
+        }
 
-            // Apply rotation (up/down camera movement)
-            camera.beta += rotateDirection.x * rotateSpeed;  // Slow down the look-up/down movement
-            scene.render();
-        });
-
+        // Handle resizing the window
         window.addEventListener('resize', () => {
-            engine.resize();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
         });
+
+        // Start the animation
+        animate();
     </script>
 </body>
 </html>
