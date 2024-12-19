@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three Block</title>
-    <h1>Three Block 24/12/19</h1>
+    <h1>tb 24/12/19</h1>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; }
@@ -72,8 +72,20 @@
         pointLight.position.set(50, 50, 50);
         scene.add(pointLight);
 
+        // Initial camera position (above the blocks)
+        camera.position.set(0, worldHeight * blockSize, 10);
+        camera.lookAt(0, 0, 0);
+
         // Camera controls
-        const controls = { forward: false, backward: false, left: false, right: false };
+        const controls = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+        };
+
         let currentBlockColor = 0xff0000; // Default to red (1)
 
         document.addEventListener('keydown', (event) => {
@@ -81,6 +93,8 @@
             if (event.key === 's') controls.backward = true;
             if (event.key === 'a') controls.left = true;
             if (event.key === 'd') controls.right = true;
+            if (event.key === ' ') controls.up = true;
+            if (event.key === 'Shift') controls.down = true;
 
             // Change block color with 1-7 keys
             const blockIndex = parseInt(event.key, 10) - 1;
@@ -94,6 +108,8 @@
             if (event.key === 's') controls.backward = false;
             if (event.key === 'a') controls.left = false;
             if (event.key === 'd') controls.right = false;
+            if (event.key === ' ') controls.up = false;
+            if (event.key === 'Shift') controls.down = false;
         });
 
         // Save button functionality
@@ -114,7 +130,7 @@
         });
 
         // Camera movement speed
-        const moveSpeed = 0.1;
+        const moveSpeed = 0.5;
 
         // Animation loop
         function animate() {
@@ -124,6 +140,8 @@
             if (controls.backward) camera.position.z += moveSpeed;
             if (controls.left) camera.position.x -= moveSpeed;
             if (controls.right) camera.position.x += moveSpeed;
+            if (controls.up) camera.position.y += moveSpeed;
+            if (controls.down) camera.position.y -= moveSpeed;
 
             renderer.render(scene, camera);
         }
