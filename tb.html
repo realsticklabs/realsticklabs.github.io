@@ -1,95 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Three.js 25x25x1 World</title>
-  <style>
-    body { margin: 0; }
-    canvas { display: block; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babylon.js 25x25x1 World</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
 </head>
 <body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script>
-    let scene, camera, renderer;
-    let worldSize = 25;
-    let playerSpeed = 0.1;
-    let controls = { forward: false, backward: false, left: false, right: false };
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        // Create the Babylon.js engine
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
 
-    function init() {
-      scene = new THREE.Scene();
-      
-      // Set up the camera, initially placed above the world, looking toward the center
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(12.5, 12.5, 10);  // Position the camera above the center
-      camera.lookAt(12.5, 12.5, 0);  // Look at the center of the world
+        // Create the scene
+        const scene = new BABYLON.Scene(engine);
 
-      renderer = new THREE.WebGLRenderer();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
+        // Create a camera (the player's POV)
+        const camera = new BABYLON.UniversalCamera("camera1", new BABYLON.Vector3(0, 1, -10), scene);
+        camera.setTarget(BABYLON.Vector3.Zero());
+        camera.attachControl(canvas, true);
 
-      // Set background color to a more neutral color
-      scene.background = new THREE.Color(0x87ceeb);  // Light sky blue background
+        // Add a light source
+        const light = new BABYLON.HemisphericLight("light1", BABYLON.Vector3.Up(), scene);
+        light.intensity = 0.7;
 
-      createWorld();
+        // Create the ground (25x25x1 world)
+        const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 25, height: 25 }, scene);
+        ground.position.y = -1;
 
-      // Add event listeners for controls
-      document.addEventListener('keydown', onKeyDown);
-      document.addEventListener('keyup', onKeyUp);
-
-      animate();
-    }
-
-    function createWorld() {
-      // Create a 25x25 grid of cubes
-      for (let x = 0; x < worldSize; x++) {
-        for (let y = 0; y < worldSize; y++) {
-          let geometry = new THREE.BoxGeometry(1, 1, 0.1);
-          let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-          let cube = new THREE.Mesh(geometry, material);
-          cube.position.set(x, y, 0);  // Position cubes in a grid pattern
-          scene.add(cube);
+        // Optional: Add some blocks for the player to interact with
+        for (let x = 0; x < 25; x++) {
+            for (let z = 0; z < 25; z++) {
+                const block = BABYLON.MeshBuilder.CreateBox("block", { size: 1 }, scene);
+                block.position = new BABYLON.Vector3(x - 12, 0, z - 12);
+            }
         }
-      }
-    }
 
-    function onKeyDown(event) {
-      switch (event.key) {
-        case 'w': controls.forward = true; break;
-        case 's': controls.backward = true; break;
-        case 'a': controls.left = true; break;
-        case 'd': controls.right = true; break;
-      }
-    }
+        // Start the render loop
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
 
-    function onKeyUp(event) {
-      switch (event.key) {
-        case 'w': controls.forward = false; break;
-        case 's': controls.backward = false; break;
-        case 'a': controls.left = false; break;
-        case 'd': controls.right = false; break;
-      }
-    }
-
-    function updateCamera() {
-      // Move the camera based on controls
-      if (controls.forward) camera.position.y -= playerSpeed;
-      if (controls.backward) camera.position.y += playerSpeed;
-      if (controls.left) camera.position.x -= playerSpeed;
-      if (controls.right) camera.position.x += playerSpeed;
-
-      // Make sure the camera stays above the world (Y position should be > 0)
-      camera.position.y = Math.max(camera.position.y, 1);
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      updateCamera();
-      renderer.render(scene, camera);
-    }
-
-    init();
-  </script>
+        // Resize the engine when the window is resized
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+    </script>
 </body>
 </html>
