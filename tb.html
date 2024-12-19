@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
-        canvas { display: block; }
+        canvas { display: block; width: 100vw; height: 100vh; }
         #saveButton {
             position: absolute;
             top: 10px;
@@ -35,7 +35,8 @@
         const scene = new BABYLON.Scene(engine);
 
         // Camera setup
-        const camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2, 10, BABYLON.Vector3.Zero(), scene);
+        const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 5, -10), scene);
+        camera.setTarget(BABYLON.Vector3.Zero()); // Target the center of the scene
         camera.attachControl(canvas, true);
 
         // Lighting setup
@@ -62,23 +63,32 @@
         ground.position.y = -0.5;
 
         // Movement setup
-        let direction = new BABYLON.Vector3(0, 0, 0);
-        let speed = 0.05;  // Slow down the movement
+        const moveSpeed = 0.1;  // Slow down the movement
+        const rotateSpeed = 0.01; // Rotation speed for up/down camera movement
 
-        // Keydown for movement (WASD)
+        // Keydown for movement (WASD for movement, Up/Down for camera rotation)
+        let moveDirection = new BABYLON.Vector3(0, 0, 0);
+        let rotateDirection = new BABYLON.Vector3(0, 0, 0);
+
         window.addEventListener('keydown', (event) => {
             switch(event.key) {
-                case 'w':
-                    direction.z = -1;
+                case 'w': // Forward (W)
+                    moveDirection.z = -1;
                     break;
-                case 's':
-                    direction.z = 1;
+                case 's': // Backward (S)
+                    moveDirection.z = 1;
                     break;
-                case 'a':
-                    direction.x = -1;
+                case 'a': // Left (A)
+                    moveDirection.x = -1;
                     break;
-                case 'd':
-                    direction.x = 1;
+                case 'd': // Right (D)
+                    moveDirection.x = 1;
+                    break;
+                case 'ArrowUp': // Look up (Up arrow)
+                    rotateDirection.x = -1;
+                    break;
+                case 'ArrowDown': // Look down (Down arrow)
+                    rotateDirection.x = 1;
                     break;
                 case '1': // Red
                     currentBlockColor = blockColors[0];
@@ -108,11 +118,15 @@
             switch(event.key) {
                 case 'w':
                 case 's':
-                    direction.z = 0;
+                    moveDirection.z = 0;
                     break;
                 case 'a':
                 case 'd':
-                    direction.x = 0;
+                    moveDirection.x = 0;
+                    break;
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    rotateDirection.x = 0;
                     break;
             }
         });
@@ -160,15 +174,20 @@
 
         // Animation loop
         engine.runRenderLoop(() => {
-            camera.alpha += direction.x * speed;
-            camera.beta += direction.z * speed;
+            // Apply movement
+            const forward = camera.getDirection(BABYLON.Axis.Z);
+            const right = camera.getDirection(BABYLON.Axis.X);
+            const movement = forward.scale(moveDirection.z * moveSpeed).add(right.scale(moveDirection.x * moveSpeed));
+            camera.position.addInPlace(movement);
+
+            // Apply rotation (up/down camera movement)
+            camera.beta += rotateDirection.x * rotateSpeed;  // Slow down the look-up/down movement
             scene.render();
         });
 
         window.addEventListener('resize', () => {
             engine.resize();
         });
-
     </script>
 </body>
 </html>
