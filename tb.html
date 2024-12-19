@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Babylon Block Game</title>
+    <title>Three Block</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -63,7 +63,7 @@
 
         // Movement setup
         let direction = new BABYLON.Vector3(0, 0, 0);
-        let speed = 0.1;
+        let speed = 0.05;  // Slow down the movement
 
         // Keydown for movement (WASD)
         window.addEventListener('keydown', (event) => {
@@ -126,12 +126,14 @@
             blocks.push(block);
         }
 
-        // Block placing (on click)
-        canvas.addEventListener('mousedown', (event) => {
+        // Block placing on mouse move
+        canvas.addEventListener('mousemove', (event) => {
             const pickResult = scene.pick(scene.pointerX, scene.pointerY);
             if (pickResult.hit) {
                 const position = pickResult.pickedPoint;
-                placeBlock(position);
+                if (event.buttons === 1) { // Place block if left mouse button is pressed
+                    placeBlock(position);
+                }
             }
         });
 
