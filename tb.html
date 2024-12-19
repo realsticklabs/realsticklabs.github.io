@@ -58,6 +58,8 @@
         const blocks = [platform];
 
         // Player setup (camera)
+        const velocity = new THREE.Vector3(); // For movement
+        const direction = new THREE.Vector3(); // For direction
         camera.position.set(0, blockSize, 5);
         camera.lookAt(0, 0, 0);
 
@@ -112,11 +114,56 @@
             }
         });
 
-        // Keydown for block color change (1-7 for block colors)
+        // Keydown for movement (WASD)
         document.addEventListener('keydown', (event) => {
-            const blockIndex = parseInt(event.key, 10) - 1;
-            if (blockIndex >= 0 && blockIndex < blockColors.length) {
-                currentBlockColor = blockColors[blockIndex];
+            const speed = 0.2;
+            switch(event.key) {
+                case 'w':
+                    direction.z = -1;
+                    break;
+                case 's':
+                    direction.z = 1;
+                    break;
+                case 'a':
+                    direction.x = -1;
+                    break;
+                case 'd':
+                    direction.x = 1;
+                    break;
+                case '1': // Change block color to red
+                    currentBlockColor = blockColors[0];
+                    break;
+                case '2': // Change block color to orange
+                    currentBlockColor = blockColors[1];
+                    break;
+                case '3': // Change block color to yellow
+                    currentBlockColor = blockColors[2];
+                    break;
+                case '4': // Change block color to green
+                    currentBlockColor = blockColors[3];
+                    break;
+                case '5': // Change block color to blue
+                    currentBlockColor = blockColors[4];
+                    break;
+                case '6': // Change block color to indigo
+                    currentBlockColor = blockColors[5];
+                    break;
+                case '7': // Change block color to pink
+                    currentBlockColor = blockColors[6];
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            switch(event.key) {
+                case 'w':
+                case 's':
+                    direction.z = 0;
+                    break;
+                case 'a':
+                case 'd':
+                    direction.x = 0;
+                    break;
             }
         });
 
@@ -144,6 +191,15 @@
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
+
+            // Move the camera based on the direction
+            velocity.x += direction.x * 0.1;
+            velocity.z += direction.z * 0.1;
+
+            camera.position.x += velocity.x;
+            camera.position.z += velocity.z;
+
+            // Render the scene
             renderer.render(scene, camera);
         }
 
