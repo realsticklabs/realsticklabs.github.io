@@ -19,16 +19,22 @@
 
     function init() {
       scene = new THREE.Scene();
+      
+      // Set up the camera, initially placed above the world, looking toward the center
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(12.5, 12.5, 10);  // Position the camera above the center
+      camera.lookAt(12.5, 12.5, 0);  // Look at the center of the world
+
       renderer = new THREE.WebGLRenderer();
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
+      // Set background color to a more neutral color
+      scene.background = new THREE.Color(0x87ceeb);  // Light sky blue background
+
       createWorld();
 
-      camera.position.set(12.5, 12.5, 5);
-      camera.lookAt(12.5, 12.5, 0);
-
+      // Add event listeners for controls
       document.addEventListener('keydown', onKeyDown);
       document.addEventListener('keyup', onKeyUp);
 
@@ -36,12 +42,13 @@
     }
 
     function createWorld() {
+      // Create a 25x25 grid of cubes
       for (let x = 0; x < worldSize; x++) {
         for (let y = 0; y < worldSize; y++) {
           let geometry = new THREE.BoxGeometry(1, 1, 0.1);
           let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
           let cube = new THREE.Mesh(geometry, material);
-          cube.position.set(x, y, 0);
+          cube.position.set(x, y, 0);  // Position cubes in a grid pattern
           scene.add(cube);
         }
       }
@@ -66,10 +73,14 @@
     }
 
     function updateCamera() {
+      // Move the camera based on controls
       if (controls.forward) camera.position.y -= playerSpeed;
       if (controls.backward) camera.position.y += playerSpeed;
       if (controls.left) camera.position.x -= playerSpeed;
       if (controls.right) camera.position.x += playerSpeed;
+
+      // Make sure the camera stays above the world (Y position should be > 0)
+      camera.position.y = Math.max(camera.position.y, 1);
     }
 
     function animate() {
