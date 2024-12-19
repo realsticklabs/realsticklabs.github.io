@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three Block</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
@@ -28,17 +29,17 @@
 <body>
     <button id="saveButton">Save Level</button>
     <script>
-        // Setup scene, camera, renderer
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Ground block (platform)
-        const blockSize = 3; // Size of the block
+        const blockSize = 3;
+
+        // Platform
         const platformGeometry = new THREE.BoxGeometry(blockSize, blockSize / 2, blockSize);
-        const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); // Green block
+        const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
         const platform = new THREE.Mesh(platformGeometry, platformMaterial);
         platform.position.set(0, -blockSize / 4, 0);
         scene.add(platform);
@@ -51,27 +52,27 @@
         pointLight.position.set(10, 10, 10);
         scene.add(pointLight);
 
-        // Block variables
+        // Blocks
         const blockGeometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
         const blockColors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0xff1493];
         let currentBlockColor = blockColors[0];
-        const blocks = [platform]; // Store placed blocks, starting with the platform
+        const blocks = [platform];
 
         // Player setup
         camera.position.set(0, blockSize, 5);
         camera.lookAt(0, 0, 0);
 
-        // Orbit controls for screen rotation
+        // Orbit controls
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.target.set(0, 0, 0);
         controls.update();
 
-        // Helper to check adjacency
+        // Block placement helper
         function isAdjacent(position) {
             const directions = [
-                new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), // Left, Right
-                new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0), // Top, Bottom
-                new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)  // Front, Back
+                new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0),
+                new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)
             ];
             for (const block of blocks) {
                 for (const dir of directions) {
@@ -82,7 +83,7 @@
             return false;
         }
 
-        // Block placement and removal
+        // Block interaction
         window.addEventListener('mousedown', (event) => {
             const mouse = new THREE.Vector2(
                 (event.clientX / window.innerWidth) * 2 - 1,
@@ -97,7 +98,6 @@
                 const position = new THREE.Vector3().copy(intersect.point).add(intersect.face.normal).divideScalar(blockSize).floor().multiplyScalar(blockSize);
 
                 if (event.button === 0) {
-                    // Left-click: Place a block (if adjacent)
                     if (isAdjacent(position)) {
                         const newBlock = new THREE.Mesh(
                             blockGeometry,
@@ -108,7 +108,6 @@
                         blocks.push(newBlock);
                     }
                 } else if (event.button === 2) {
-                    // Right-click: Remove a block
                     const object = intersect.object;
                     if (object !== platform) {
                         scene.remove(object);
@@ -119,7 +118,6 @@
             }
         });
 
-        // Change block color with keys 1-7
         document.addEventListener('keydown', (event) => {
             const blockIndex = parseInt(event.key, 10) - 1;
             if (blockIndex >= 0 && blockIndex < blockColors.length) {
@@ -127,7 +125,6 @@
             }
         });
 
-        // Save level button
         document.getElementById('saveButton').addEventListener('click', () => {
             const levelData = blocks.map(block => ({
                 x: block.position.x,
@@ -148,7 +145,6 @@
             });
         });
 
-        // Animation loop
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
@@ -157,6 +153,5 @@
 
         animate();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </body>
 </html>
