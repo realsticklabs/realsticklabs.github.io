@@ -48,18 +48,20 @@
 
         // Camera setup (Player's POV)
         camera.position.set(0, 1, 5); // Initial position behind the player
-        camera.rotation.set(0, 0, 0); // Camera starts without rotation
         camera.lookAt(player.position);
 
         // Movement variables
         const movementSpeed = 0.1;
-        const rotationSpeed = 0.05;
+        const rotationSpeed = 0.01;
         let moveForward = false;
         let moveBackward = false;
         let moveLeft = false;
         let moveRight = false;
-        let rotateLeft = false;
-        let rotateRight = false;
+
+        // Mouse control variables
+        let mouseX = 0;
+        let mouseY = 0;
+        let mouseDown = false;
 
         // Keyboard event listeners
         window.addEventListener('keydown', (event) => {
@@ -69,10 +71,8 @@
                 moveBackward = true;
             } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
                 moveLeft = true;
-                rotateLeft = true;
             } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
                 moveRight = true;
-                rotateRight = true;
             }
         });
 
@@ -83,11 +83,35 @@
                 moveBackward = false;
             } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
                 moveLeft = false;
-                rotateLeft = false;
             } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
                 moveRight = false;
-                rotateRight = false;
             }
+        });
+
+        // Mouse movement events for looking around
+        window.addEventListener('mousemove', (event) => {
+            if (mouseDown) {
+                const deltaX = event.clientX - mouseX;
+                const deltaY = event.clientY - mouseY;
+
+                // Rotate player based on mouse movement
+                player.rotation.y -= deltaX * rotationSpeed;
+                camera.rotation.x -= deltaY * rotationSpeed;
+
+                // Constrain camera's x rotation to avoid flipping
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            }
+
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+
+        window.addEventListener('mousedown', () => {
+            mouseDown = true;
+        });
+
+        window.addEventListener('mouseup', () => {
+            mouseDown = false;
         });
 
         // Animation loop
@@ -110,17 +134,9 @@
                 player.position.x += movementSpeed; // Move right along X-axis
             }
 
-            // Handle rotation
-            if (rotateLeft) {
-                player.rotation.y += rotationSpeed; // Rotate player left (counterclockwise)
-            }
-            if (rotateRight) {
-                player.rotation.y -= rotationSpeed; // Rotate player right (clockwise)
-            }
-
             // Update camera to follow the player's position and orientation
             camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5);
-            camera.rotation.set(player.rotation.x, player.rotation.y, player.rotation.z);
+            camera.lookAt(player.position);
 
             // Render the scene
             renderer.render(scene, camera);
