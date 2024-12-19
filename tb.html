@@ -65,10 +65,15 @@
         // Movement setup
         const moveSpeed = 0.1;  // Slow down the movement
         const rotateSpeed = 0.01; // Rotation speed for up/down camera movement
+        const gravity = -0.2; // Gravity force applied to the camera
+        const jumpSpeed = 1.5; // Jump force when pressing space
+        let velocityY = 0; // Vertical velocity for gravity and jumping
+        const groundLevel = ground.position.y + 0.5; // Ground height to detect collision
 
-        // Keydown for movement (WASD for movement, Up/Down for camera rotation)
+        // Keydown for movement (WASD for movement, Up/Down for camera rotation, Space for jump)
         let moveDirection = new BABYLON.Vector3(0, 0, 0);
         let rotateDirection = new BABYLON.Vector3(0, 0, 0);
+        let isJumping = false;
 
         window.addEventListener('keydown', (event) => {
             switch(event.key) {
@@ -89,6 +94,12 @@
                     break;
                 case 'ArrowDown': // Look down (Down arrow)
                     rotateDirection.x = 1;
+                    break;
+                case ' ':
+                    if (!isJumping) {
+                        isJumping = true;
+                        velocityY = jumpSpeed; // Apply upward force
+                    }
                     break;
                 case '1': // Red
                     currentBlockColor = blockColors[0];
@@ -174,6 +185,17 @@
 
         // Animation loop
         engine.runRenderLoop(() => {
+            // Apply gravity and vertical movement
+            if (camera.position.y > groundLevel) {
+                velocityY += gravity; // Apply gravity
+            } else {
+                camera.position.y = groundLevel; // Ensure we stay on the ground
+                velocityY = 0; // Reset vertical velocity
+                isJumping = false;
+            }
+
+            camera.position.y += velocityY; // Move vertically based on gravity or jump
+
             // Apply movement
             const forward = camera.getDirection(BABYLON.Axis.Z);
             const right = camera.getDirection(BABYLON.Axis.X);
