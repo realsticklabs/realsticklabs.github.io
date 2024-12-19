@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js World</title>
+    <title>Three Block</title>
     <style>
         body { margin: 0; overflow: hidden; }
         canvas { display: block; }
@@ -46,16 +46,63 @@
         player.position.set(0, 1, 0); // Spawn the player on top of the world
         scene.add(player);
 
-        // Camera position
-        camera.position.set(0, 5, 30); // Camera position above the world
-        camera.lookAt(0, 0, 0); // Look at the center of the world
+        // Camera setup (Player's POV)
+        camera.position.set(0, 1, 5); // Camera behind the player initially
+        camera.lookAt(player.position);
+
+        // Movement variables
+        const movementSpeed = 0.1;
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+
+        // Keyboard event listeners
+        window.addEventListener('keydown', (event) => {
+            if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+                moveForward = true;
+            } else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+                moveBackward = true;
+            } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+                moveLeft = true;
+            } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+                moveRight = true;
+            }
+        });
+
+        window.addEventListener('keyup', (event) => {
+            if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+                moveForward = false;
+            } else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+                moveBackward = false;
+            } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+                moveLeft = false;
+            } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+                moveRight = false;
+            }
+        });
 
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // Rotate the world (optional)
-            worldGroup.rotation.y += 0.01;
+            // Handle movement
+            if (moveForward) {
+                player.position.z -= movementSpeed;
+            }
+            if (moveBackward) {
+                player.position.z += movementSpeed;
+            }
+            if (moveLeft) {
+                player.position.x -= movementSpeed;
+            }
+            if (moveRight) {
+                player.position.x += movementSpeed;
+            }
+
+            // Update camera to follow the player
+            camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5);
+            camera.lookAt(player.position);
 
             // Render the scene
             renderer.render(scene, camera);
@@ -70,6 +117,13 @@
 
         // Start the animation
         animate();
+
+        // Rename game on 01/01/25
+        const renameDate = new Date('2025-01-01T00:00:00');
+        const currentDate = new Date();
+        if (currentDate >= renameDate) {
+            document.title = 'BlockCreate';
+        }
     </script>
 </body>
 </html>
