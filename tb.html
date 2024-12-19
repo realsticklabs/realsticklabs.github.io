@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three Block</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>Babylon Block Game</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
@@ -28,95 +28,45 @@
 <body>
     <button id="saveButton">Save Level</button>
     <script>
-        // Scene setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        // Create the Babylon.js engine and scene
+        const canvas = document.createElement("canvas");
+        document.body.appendChild(canvas);
+        const engine = new BABYLON.Engine(canvas, true);
+        const scene = new BABYLON.Scene(engine);
 
+        // Camera setup
+        const camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 2, 10, BABYLON.Vector3.Zero(), scene);
+        camera.attachControl(canvas, true);
+
+        // Lighting setup
+        const light = new BABYLON.HemisphericLight("light", BABYLON.Vector3.Up(), scene);
+        light.intensity = 0.7;
+
+        // Block size and colors
         const blockSize = 3;
+        const blockColors = [
+            new BABYLON.Color3(1, 0, 0), // Red
+            new BABYLON.Color3(1, 0.5, 0), // Orange
+            new BABYLON.Color3(1, 1, 0), // Yellow
+            new BABYLON.Color3(0, 1, 0), // Green
+            new BABYLON.Color3(0, 0, 1), // Blue
+            new BABYLON.Color3(0.29, 0, 0.51), // Indigo
+            new BABYLON.Color3(1, 0.08, 0.57) // Pink
+        ];
 
-        // Platform (Ground)
-        const platformGeometry = new THREE.BoxGeometry(blockSize, blockSize / 2, blockSize);
-        const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-        const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-        platform.position.set(0, -blockSize / 4, 0);
-        scene.add(platform);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-        scene.add(ambientLight);
-        const pointLight = new THREE.PointLight(0xffffff, 1);
-        pointLight.position.set(10, 10, 10);
-        scene.add(pointLight);
-
-        // Blocks array
-        const blockGeometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-        const blockColors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0xff1493];
         let currentBlockColor = blockColors[0];
-        const blocks = [platform];
+        const blocks = [];
 
-        // Player setup (camera)
-        const velocity = new THREE.Vector3(); // For movement
-        const direction = new THREE.Vector3(); // For direction
-        camera.position.set(0, blockSize, 5);
-        camera.lookAt(0, 0, 0);
+        // Create ground
+        const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 50, height: 50 }, scene);
+        ground.position.y = -0.5;
 
-        // Block placement helper
-        function isAdjacent(position) {
-            const directions = [
-                new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
-                new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0),
-                new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)
-            ];
-            for (const block of blocks) {
-                for (const dir of directions) {
-                    const neighbor = new THREE.Vector3().copy(block.position).add(dir.multiplyScalar(blockSize));
-                    if (neighbor.equals(position)) return true;
-                }
-            }
-            return false;
-        }
-
-        // Block placement and removal
-        window.addEventListener('mousedown', (event) => {
-            const mouse = new THREE.Vector2(
-                (event.clientX / window.innerWidth) * 2 - 1,
-                -(event.clientY / window.innerHeight) * 2 + 1
-            );
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-
-            const intersects = raycaster.intersectObjects(scene.children);
-            if (intersects.length > 0) {
-                const intersect = intersects[0];
-                const position = new THREE.Vector3().copy(intersect.point).add(intersect.face.normal).divideScalar(blockSize).floor().multiplyScalar(blockSize);
-
-                if (event.button === 0) {
-                    if (isAdjacent(position)) {
-                        const newBlock = new THREE.Mesh(
-                            blockGeometry,
-                            new THREE.MeshStandardMaterial({ color: currentBlockColor })
-                        );
-                        newBlock.position.copy(position);
-                        scene.add(newBlock);
-                        blocks.push(newBlock);
-                    }
-                } else if (event.button === 2) {
-                    const object = intersect.object;
-                    if (object !== platform) {
-                        scene.remove(object);
-                        const index = blocks.indexOf(object);
-                        if (index !== -1) blocks.splice(index, 1);
-                    }
-                }
-            }
-        });
+        // Movement setup
+        let direction = new BABYLON.Vector3(0, 0, 0);
+        let speed = 0.1;
 
         // Keydown for movement (WASD)
-        document.addEventListener('keydown', (event) => {
-            const speed = 0.2;
+        window.addEventListener('keydown', (event) => {
             switch(event.key) {
                 case 'w':
                     direction.z = -1;
@@ -130,31 +80,31 @@
                 case 'd':
                     direction.x = 1;
                     break;
-                case '1': // Change block color to red
+                case '1': // Red
                     currentBlockColor = blockColors[0];
                     break;
-                case '2': // Change block color to orange
+                case '2': // Orange
                     currentBlockColor = blockColors[1];
                     break;
-                case '3': // Change block color to yellow
+                case '3': // Yellow
                     currentBlockColor = blockColors[2];
                     break;
-                case '4': // Change block color to green
+                case '4': // Green
                     currentBlockColor = blockColors[3];
                     break;
-                case '5': // Change block color to blue
+                case '5': // Blue
                     currentBlockColor = blockColors[4];
                     break;
-                case '6': // Change block color to indigo
+                case '6': // Indigo
                     currentBlockColor = blockColors[5];
                     break;
-                case '7': // Change block color to pink
+                case '7': // Pink
                     currentBlockColor = blockColors[6];
                     break;
             }
         });
 
-        document.addEventListener('keyup', (event) => {
+        window.addEventListener('keyup', (event) => {
             switch(event.key) {
                 case 'w':
                 case 's':
@@ -167,13 +117,31 @@
             }
         });
 
-        // Save level functionality (as a .dat file)
+        // Block placement helper function
+        function placeBlock(position) {
+            const block = BABYLON.MeshBuilder.CreateBox("block", { size: blockSize }, scene);
+            block.position = position;
+            block.material = new BABYLON.StandardMaterial("blockMaterial", scene);
+            block.material.diffuseColor = currentBlockColor;
+            blocks.push(block);
+        }
+
+        // Block placing (on click)
+        canvas.addEventListener('mousedown', (event) => {
+            const pickResult = scene.pick(scene.pointerX, scene.pointerY);
+            if (pickResult.hit) {
+                const position = pickResult.pickedPoint;
+                placeBlock(position);
+            }
+        });
+
+        // Save level functionality (save to .dat as zip)
         document.getElementById('saveButton').addEventListener('click', () => {
             const levelData = blocks.map(block => ({
                 x: block.position.x,
                 y: block.position.y,
                 z: block.position.z,
-                color: block.material.color.getHexString()
+                color: block.material.diffuseColor.toHexString()
             }));
 
             const zip = new JSZip();
@@ -189,21 +157,16 @@
         });
 
         // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
+        engine.runRenderLoop(() => {
+            camera.alpha += direction.x * speed;
+            camera.beta += direction.z * speed;
+            scene.render();
+        });
 
-            // Move the camera based on the direction
-            velocity.x += direction.x * 0.1;
-            velocity.z += direction.z * 0.1;
+        window.addEventListener('resize', () => {
+            engine.resize();
+        });
 
-            camera.position.x += velocity.x;
-            camera.position.z += velocity.z;
-
-            // Render the scene
-            renderer.render(scene, camera);
-        }
-
-        animate();
     </script>
 </body>
 </html>
