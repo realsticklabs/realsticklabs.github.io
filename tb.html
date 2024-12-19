@@ -1,163 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three Block</title>
-    <style>
-        body { margin: 0; overflow: hidden; }
-        canvas { display: block; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js 25x25x1 World</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+  </style>
 </head>
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        // Scene setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    let scene, camera, renderer;
+    let worldSize = 25;
+    let playerSpeed = 0.1;
+    let controls = { forward: false, backward: false, left: false, right: false };
 
-        // Create the world (a flat 25x25 grid)
-        const worldWidth = 25;
-        const worldHeight = 25;
-        const worldDepth = 1;
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
 
-        const worldGeometry = new THREE.BoxGeometry(1, 1, 1); // Single block size
-        const worldMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green color for the world blocks
-        const worldGroup = new THREE.Group(); // Group to hold all blocks
+      createWorld();
 
-        // Loop to create the world grid
-        for (let x = 0; x < worldWidth; x++) {
-            for (let z = 0; z < worldHeight; z++) {
-                const block = new THREE.Mesh(worldGeometry, worldMaterial);
-                block.position.set(x - worldWidth / 2, 0, z - worldHeight / 2); // Center the grid
-                worldGroup.add(block);
-            }
+      camera.position.set(12.5, 12.5, 5);
+      camera.lookAt(12.5, 12.5, 0);
+
+      document.addEventListener('keydown', onKeyDown);
+      document.addEventListener('keyup', onKeyUp);
+
+      animate();
+    }
+
+    function createWorld() {
+      for (let x = 0; x < worldSize; x++) {
+        for (let y = 0; y < worldSize; y++) {
+          let geometry = new THREE.BoxGeometry(1, 1, 0.1);
+          let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          let cube = new THREE.Mesh(geometry, material);
+          cube.position.set(x, y, 0);
+          scene.add(cube);
         }
+      }
+    }
 
-        scene.add(worldGroup);
+    function onKeyDown(event) {
+      switch (event.key) {
+        case 'w': controls.forward = true; break;
+        case 's': controls.backward = true; break;
+        case 'a': controls.left = true; break;
+        case 'd': controls.right = true; break;
+      }
+    }
 
-        // Create the player (a simple cube)
-        const playerGeometry = new THREE.BoxGeometry(1, 2, 1); // Player size (taller than the world blocks)
-        const playerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red color for the player
-        const player = new THREE.Mesh(playerGeometry, playerMaterial);
-        player.position.set(0, 1, 0); // Spawn the player on top of the world
-        scene.add(player);
+    function onKeyUp(event) {
+      switch (event.key) {
+        case 'w': controls.forward = false; break;
+        case 's': controls.backward = false; break;
+        case 'a': controls.left = false; break;
+        case 'd': controls.right = false; break;
+      }
+    }
 
-        // Camera setup (Player's POV)
-        camera.position.set(0, 1, 5); // Initial position behind the player
-        camera.lookAt(player.position);
+    function updateCamera() {
+      if (controls.forward) camera.position.y -= playerSpeed;
+      if (controls.backward) camera.position.y += playerSpeed;
+      if (controls.left) camera.position.x -= playerSpeed;
+      if (controls.right) camera.position.x += playerSpeed;
+    }
 
-        // Movement variables
-        const movementSpeed = 0.1;
-        const rotationSpeed = 0.05;
-        let moveForward = false;
-        let moveBackward = false;
-        let moveLeft = false;
-        let moveRight = false;
+    function animate() {
+      requestAnimationFrame(animate);
+      updateCamera();
+      renderer.render(scene, camera);
+    }
 
-        // Mouse control variables
-        let mouseX = 0;
-        let mouseY = 0;
-        let mouseDown = false;
-
-        // Keyboard event listeners
-        window.addEventListener('keydown', (event) => {
-            if (event.code === 'ArrowUp' || event.code === 'KeyW') {
-                moveForward = true;
-            } else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
-                moveBackward = true;
-            } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
-                moveLeft = true;
-            } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
-                moveRight = true;
-            }
-        });
-
-        window.addEventListener('keyup', (event) => {
-            if (event.code === 'ArrowUp' || event.code === 'KeyW') {
-                moveForward = false;
-            } else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
-                moveBackward = false;
-            } else if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
-                moveLeft = false;
-            } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
-                moveRight = false;
-            }
-        });
-
-        // Mouse movement events for looking around
-        window.addEventListener('mousemove', (event) => {
-            if (mouseDown) {
-                const deltaX = event.clientX - mouseX;
-                const deltaY = event.clientY - mouseY;
-
-                // Rotate player based on mouse movement
-                player.rotation.y -= deltaX * rotationSpeed;
-                camera.rotation.x -= deltaY * rotationSpeed;
-
-                // Constrain camera's x rotation to avoid flipping
-                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
-            }
-
-            mouseX = event.clientX;
-            mouseY = event.clientY;
-        });
-
-        window.addEventListener('mousedown', () => {
-            mouseDown = true;
-        });
-
-        window.addEventListener('mouseup', () => {
-            mouseDown = false;
-        });
-
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Handle movement
-            if (moveForward) {
-                player.position.z -= movementSpeed * Math.cos(player.rotation.y); // Move forward in the direction player is facing
-                player.position.x -= movementSpeed * Math.sin(player.rotation.y); // Move forward in the direction player is facing
-            }
-            if (moveBackward) {
-                player.position.z += movementSpeed * Math.cos(player.rotation.y); // Move backward in the opposite direction
-                player.position.x += movementSpeed * Math.sin(player.rotation.y); // Move backward in the opposite direction
-            }
-            if (moveLeft) {
-                player.position.x -= movementSpeed; // Move left along X-axis
-            }
-            if (moveRight) {
-                player.position.x += movementSpeed; // Move right along X-axis
-            }
-
-            // Camera follows the player's position and orientation
-            camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5); // 5 units behind player
-            camera.lookAt(player.position); // Camera always looks at player
-
-            // Render the scene
-            renderer.render(scene, camera);
-        }
-
-        // Handle resizing the window
-        window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-        });
-
-        // Start the animation
-        animate();
-
-        // Rename game on 01/01/25
-        const renameDate = new Date('2025-01-01T00:00:00');
-        const currentDate = new Date();
-        if (currentDate >= renameDate) {
-            document.title = 'BlockCreate';
-        }
-    </script>
+    init();
+  </script>
 </body>
 </html>
