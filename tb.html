@@ -4,29 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three Block</title>
-    <h1>tb 24/12/19</h1>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; }
+        body { margin: 0; overflow: hidden; }
         canvas { display: block; }
-        #saveButton {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 10px 20px;
-            background-color: #0078D7;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        #saveButton:hover {
-            background-color: #005fa3;
-        }
     </style>
 </head>
 <body>
-    <button id="saveButton">Save Level</button>
     <script>
         // Setup scene, camera, renderer
         const scene = new THREE.Scene();
@@ -35,48 +19,27 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Level dimensions
-        const worldWidth = 25;
-        const worldHeight = 20;
-        const worldDepth = 25;
-        const blockSize = 1;
-
-        // Colors for blocks (1-7)
-        const blockColors = [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x4b0082, 0xff1493];
-
-        // Create grid of blocks
-        const blocks = [];
-        const cubeGeometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-
-        for (let x = 0; x < worldWidth; x++) {
-            for (let y = 0; y < worldHeight; y++) {
-                for (let z = 0; z < worldDepth; z++) {
-                    const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-                    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-                    cube.position.set(
-                        x * blockSize - (worldWidth * blockSize / 2),
-                        y * blockSize,
-                        z * blockSize - (worldDepth * blockSize / 2)
-                    );
-                    scene.add(cube);
-                    blocks.push({ x, y, z, color: 0x00ff00 });
-                }
-            }
-        }
+        // Ground block (platform)
+        const blockSize = 3; // Size of the block
+        const platformGeometry = new THREE.BoxGeometry(blockSize, blockSize / 2, blockSize);
+        const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); // Green block
+        const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+        platform.position.set(0, -blockSize / 4, 0); // Position the block slightly below the camera
+        scene.add(platform);
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
 
         const pointLight = new THREE.PointLight(0xffffff, 1);
-        pointLight.position.set(50, 50, 50);
+        pointLight.position.set(10, 10, 10);
         scene.add(pointLight);
 
-        // Initial camera position (above the blocks)
-        camera.position.set(0, worldHeight * blockSize, 10);
+        // Camera initial position (above the block)
+        camera.position.set(0, 2, 5); // Positioned above and slightly back
         camera.lookAt(0, 0, 0);
 
-        // Camera controls
+        // Controls
         const controls = {
             forward: false,
             backward: false,
@@ -86,8 +49,6 @@
             down: false,
         };
 
-        let currentBlockColor = 0xff0000; // Default to red (1)
-
         document.addEventListener('keydown', (event) => {
             if (event.key === 'w') controls.forward = true;
             if (event.key === 's') controls.backward = true;
@@ -95,12 +56,6 @@
             if (event.key === 'd') controls.right = true;
             if (event.key === ' ') controls.up = true;
             if (event.key === 'Shift') controls.down = true;
-
-            // Change block color with 1-7 keys
-            const blockIndex = parseInt(event.key, 10) - 1;
-            if (blockIndex >= 0 && blockIndex < blockColors.length) {
-                currentBlockColor = blockColors[blockIndex];
-            }
         });
 
         document.addEventListener('keyup', (event) => {
@@ -112,25 +67,8 @@
             if (event.key === 'Shift') controls.down = false;
         });
 
-        // Save button functionality
-        document.getElementById('saveButton').addEventListener('click', () => {
-            const blockData = blocks.map(block => ({
-                x: block.x,
-                y: block.y,
-                z: block.z,
-                color: block.color.toString(16)
-            }));
-            const blob = new Blob([JSON.stringify(blockData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'block.dat';
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-
-        // Camera movement speed
-        const moveSpeed = 0.5;
+        // Movement speed
+        const moveSpeed = 0.1;
 
         // Animation loop
         function animate() {
