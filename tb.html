@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THREE.js Texture Atlas</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+</head>
+<body>
+  <script>
+    // Set up the scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Load the texture atlas
+    const textureLoader = new THREE.TextureLoader();
+    const textureAtlas = textureLoader.load('/pixil-frame-0.png');
+
+    // Define the grid size and cube size
+    const gridSize = 10; // Number of cubes per row/column
+    const cubeSize = 1; // Size of each cube
+
+    // Configure the texture mapping
+    const tilesX = 16; // Number of tiles in the X direction on the atlas
+    const tilesY = 16; // Number of tiles in the Y direction on the atlas
+    const tileSize = 1 / tilesX; // Fraction of the texture for one tile
+
+    // Helper function to create materials for specific tiles
+    function createMaterial(tileX, tileY) {
+      const material = new THREE.MeshBasicMaterial({
+        map: textureAtlas,
+      });
+      material.map.repeat.set(tileSize, tileSize);
+      material.map.offset.set(tileX * tileSize, 1 - (tileY + 1) * tileSize);
+      material.map.needsUpdate = true;
+      return material;
+    }
+
+    // Create the world grid
+    for (let x = 0; x < gridSize; x++) {
+      for (let z = 0; z < gridSize; z++) {
+        // Randomly choose a tile index for this cube
+        const tileX = Math.floor(Math.random() * tilesX);
+        const tileY = Math.floor(Math.random() * tilesY);
+
+        // Create a cube with the chosen texture
+        const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        const material = createMaterial(tileX, tileY);
+        const cube = new THREE.Mesh(geometry, material);
+
+        // Position the cube in the grid
+        cube.position.set(x * cubeSize, 0, z * cubeSize);
+        scene.add(cube);
+      }
+    }
+
+    // Position the camera
+    camera.position.set(gridSize * cubeSize / 2, gridSize, gridSize * cubeSize / 2);
+    camera.lookAt(0, 0, 0);
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
