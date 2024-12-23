@@ -3,70 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>THREE.js Texture Atlas</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <title>Texture Atlas with THREE.js</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r146/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/plist/3.0.1/plist.min.js"></script>
 </head>
 <body>
-  <script>
-    // Set up the scene, camera, and renderer
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+<script>
+  // Scene, Camera, and Renderer
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-    // Load the texture atlas
-    const textureLoader = new THREE.TextureLoader();
-    const textureAtlas = textureLoader.load('/pixil-frame-0.png');
+  // Light
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(5, 10, 7.5);
+  scene.add(light);
 
-    // Define the grid size and cube size
-    const gridSize = 10; // Number of cubes per row/column
-    const cubeSize = 1; // Size of each cube
+  // Load Texture Atlas
+  const textureLoader = new THREE.TextureLoader();
+  const textureAtlas = textureLoader.load('pixil-frame-0.png', () => {
+    console.log('Texture Atlas Loaded!');
+  });
 
-    // Configure the texture mapping
-    const tilesX = 16; // Number of tiles in the X direction on the atlas
-    const tilesY = 16; // Number of tiles in the Y direction on the atlas
-    const tileSize = 1 / tilesX; // Fraction of the texture for one tile
+  // Function to calculate UV coordinates
+  function getUVCoordinates(block, atlasSize = 256) {
+    const { x, y, width, height } = block;
 
-    // Helper function to create materials for specific tiles
-    function createMaterial(tileX, tileY) {
-      const material = new THREE.MeshBasicMaterial({
-        map: textureAtlas,
+    // Normalize to [0, 1] range
+    const u1 = x / atlasSize;
+    const v1 = y / atlasSize;
+    const u2 = (x + width) / atlasSize;
+    const v2 = (y + height) / atlasSize;
+
+    return [
+      [u1, 1 - v1], // Top-left
+      [u2, 1 - v1], // Top-right
+      [u1, 1 - v2], // Bottom-left
+      [u2, 1 - v2], // Bottom-right
+    ];
+  }
+
+  // Load the .plist file and generate blocks
+  fetch('blocks.plist')
+    .then((response) => response.text())
+    .then((text) => {
+      const parsedData = plist.parse(text);
+      const blocks = parsedData.blocks;
+
+      // Generate some blocks for demonstration
+      Object.keys(blocks).forEach((blockName, index) => {
+        const block = blocks[blockName];
+        const uvCoordinates = getUVCoordinates(block);
+
+        // Create Geometry and Map UVs
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshBasicMaterial({ map: textureAtlas });
+
+        // Apply UV mapping to all six sides of the box
+        geometry.faceVertexUvs[0] = [];
+        for (let i = 0; i < 6; i++) {
+          geometry.faceVertexUvs[0].push([
+            new THREE.Vector2(...uvCoordinates[0]),
+            new THREE.Vector2(...uvCoordinates[1]),
+            new THREE.Vector2(...uvCoordinates[2]),
+          ]);
+          geometry.faceVertexUvs[0].push([
+            new THREE.Vector2(...uvCoordinates[2]),
+            new THREE.Vector2(...uvCoordinates[1]),
+            new THREE.Vector2(...uvCoordinates[3]),
+          ]);
+        }
+
+        // Create Mesh
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // Position Meshes in a grid for visibility
+        mesh.position.set(index % 5 - 2, 0, Math.floor(index / 5) * -2);
+        scene.add(mesh);
       });
-      material.map.repeat.set(tileSize, tileSize);
-      material.map.offset.set(tileX * tileSize, 1 - (tileY + 1) * tileSize);
-      material.map.needsUpdate = true;
-      return material;
-    }
+    });
 
-    // Create the world grid
-    for (let x = 0; x < gridSize; x++) {
-      for (let z = 0; z < gridSize; z++) {
-        // Randomly choose a tile index for this cube
-        const tileX = Math.floor(Math.random() * tilesX);
-        const tileY = Math.floor(Math.random() * tilesY);
+  // Camera Position
+  camera.position.z = 5;
 
-        // Create a cube with the chosen texture
-        const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-        const material = createMaterial(tileX, tileY);
-        const cube = new THREE.Mesh(geometry, material);
-
-        // Position the cube in the grid
-        cube.position.set(x * cubeSize, 0, z * cubeSize);
-        scene.add(cube);
-      }
-    }
-
-    // Position the camera
-    camera.position.set(gridSize * cubeSize / 2, gridSize, gridSize * cubeSize / 2);
-    camera.lookAt(0, 0, 0);
-
-    // Animation loop
-    function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
+  // Animation Loop
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+</script>
 </body>
 </html>
