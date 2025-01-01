@@ -5,26 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Astrophotography Collection</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script> <!-- Link to external JavaScript file -->
 </head>
 <body>
     <header>
         <h1>Astrophotography Collection</h1>
         <p>Welcome to my collection of astrophotography images. Each one is named FN # (Fieldnomer).</p>
     </header>
-<b>Please note: Almost all these images are taken with Stellarium Web, and not with an actual telescope. The ones that aren't taken on Stellarium Web, will have an S below them.</b>
-    <section class="gallery">
-        <div class="image-card">
-            <img src="image1.jpg" alt="FN #1" />
-            <p class="fieldnomer">FN #1: Star NGC 1750 1213</p>
-        </div>
-        <div class="image-card">
-            <img src="image2.jpg" alt="FN #2" />
-            <p class="fieldnomer">FN #2: Satellite STARLINK-31604(Fieldnomer Satellite)</p>
-        </div>
-        <div class="image-card">
-            <img src="image3.jpg" alt="FN #3" />
-            <p class="fieldnomer">FN #3: Star Cluster Pleiades</p>
-        </div>
+
+    <b>Please note: Almost all these images are taken with Stellarium Web, and not with an actual telescope. The ones that aren't taken on Stellarium Web, will have an S below them.</b>
+    
+    <!-- Calendar for selecting a date -->
+    <section class="calendar">
+        <label for="date-picker">Select a date to view images taken on that day:</label>
+        <input type="date" id="date-picker" onchange="filterImagesByDate()" />
+    </section>
+
+    <!-- Gallery section where images will be displayed -->
+    <section class="gallery" id="image-gallery">
+        <!-- Images will be displayed here based on date selection -->
     </section>
 
     <footer>
